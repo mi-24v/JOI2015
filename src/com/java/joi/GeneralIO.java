@@ -13,21 +13,23 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.stream.Collectors;
 
 public class GeneralIO {
 	public static final String ERR_INVALIDNAME = "invalid name,please retry";
 	public static final Charset FILEFORMAT = StandardCharsets.UTF_8;
+	public static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
 
 	private BufferedReader stdin;
-	private ArrayList<ArrayList<String>> filedata;
+	private ArrayList<ArrayList<String>> inputfiledata,outputfiledata;
 
 	public GeneralIO(){
 		stdin = new BufferedReader(new InputStreamReader(System.in));
-		filedata = new ArrayList<>();
+		inputfiledata = new ArrayList<>();
 	}
 
 	public void interactive(){
@@ -37,7 +39,6 @@ public class GeneralIO {
 			query = stdin.readLine();
 			if(query.contains("http")){
 				URL url = new URL(query);
-				//TODO 並列実行:Download->Stream流し込み,Save
 				download(url);
 			}else{
 				perseFile(query);
@@ -71,12 +72,12 @@ public class GeneralIO {
 				BufferedReader in =
 						new BufferedReader(new InputStreamReader
 								(con.getInputStream()));
-				File outfile = new File("data"+Calendar.getInstance().getTime().getTime()+".txt");
+				File outfile = new File("input_"+LocalDateTime.now().format(TIME_FORMAT)+".txt");
 				if(!outfile.exists()){outfile.createNewFile();}
 				BufferedWriter out = new BufferedWriter(
 						new FileWriter(outfile));
 				in.lines().forEach(line -> {
-					this.filedata.add(new ArrayList<String>(Arrays.asList(line.split("/s"))));
+					this.inputfiledata.add(new ArrayList<String>(Arrays.asList(line.split("\\s"))));
 					try {
 						out.write(line);
 						out.newLine();
@@ -115,7 +116,7 @@ public class GeneralIO {
 		}else{
 			try {
 				ArrayList<String> raw = (ArrayList<String>)Files.readAllLines(tgtfile.toPath(), FILEFORMAT);
-				filedata = raw.stream().map(line -> new ArrayList<String>(Arrays.asList(line.split("/s")))).collect(Collectors.toCollection(ArrayList::new));
+				inputfiledata = raw.stream().map(line -> new ArrayList<String>(Arrays.asList(line.split("/s")))).collect(Collectors.toCollection(ArrayList::new));
 			} catch (IOException e) {
 				e.printStackTrace();
 				System.err.println("read error, please retry");
@@ -125,8 +126,31 @@ public class GeneralIO {
 		}
 	}
 
-	public ArrayList<ArrayList<String>> getdata(){
-		return this.filedata;
+	public void output(){
+		File outfile = new File("output_"+LocalDateTime.now().format(TIME_FORMAT)+".txt");
+		try{outfile.createNewFile();}catch(IOException e){e.printStackTrace();}
+		try(BufferedWriter outer = new BufferedWriter(new FileWriter(outfile))){
+			for(ArrayList<String> array : this.outputfiledata){
+				for(String s : array){
+					outer.write(s);
+					if(array.indexOf(s) == array.size()-1){
+						outer.newLine();
+					}else{
+						outer.write(" ");
+					}
+				}
+			}
+		}catch(IOException e){
+			e.printStackTrace();
+		}
+	}
+
+	public ArrayList<ArrayList<String>> getInputdata(){
+		return this.inputfiledata;
+	}
+
+	public void setOutputdata(ArrayList<ArrayList<String>> data){
+		this.outputfiledata = data;
 	}
 
 }
