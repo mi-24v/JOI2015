@@ -116,7 +116,7 @@ public class GeneralIO {
 		}else{
 			try {
 				ArrayList<String> raw = (ArrayList<String>)Files.readAllLines(tgtfile.toPath(), FILEFORMAT);
-				inputfiledata = raw.stream().map(line -> new ArrayList<String>(Arrays.asList(line.split("/s")))).collect(Collectors.toCollection(ArrayList::new));
+				inputfiledata = raw.stream().map(line -> new ArrayList<String>(Arrays.asList(line.split("\\s")))).collect(Collectors.toCollection(ArrayList::new));
 			} catch (IOException e) {
 				e.printStackTrace();
 				System.err.println("read error, please retry");
